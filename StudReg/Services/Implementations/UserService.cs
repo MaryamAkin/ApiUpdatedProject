@@ -87,9 +87,17 @@ namespace StudReg.Services.Implementations
             };
         }
 
-        public Task<BaseResponse<UserDto>> LoginAsync(LoginRequestModel model)
+        public BaseResponse<UserDto> LoginAsync(LoginRequestModel model)
         {
-            throw new NotImplementedException();
+            return new BaseResponse<UserDto>
+            {
+                Data = new UserDto{
+                    Email = "test-user@email.com",
+                    Id = Guid.NewGuid(),
+                    Roles = [new RoleDto{Name = "Admin"}, new RoleDto{Name = "Manager"}]
+                },
+                Status = true
+            };
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +21,6 @@ namespace StudReg.Controllers
         {
             _userService = userService;
         }
-
         [HttpPost]
         public async Task<IActionResult> Register(CreateUserRequestModel model)
         {
@@ -38,9 +38,9 @@ namespace StudReg.Controllers
             var result = await _userService.GetAllAsync();
             return Ok(result);
         }
-
+        [ApiKey]
         [HttpGet("{id}")]
-        public async Task<IActionResult> Get([FromQuery]Guid id)
+        public async Task<IActionResult> Get(Guid id)
         {
             var result = await _userService.GetAsync(id);
             if(result.Status)
@@ -49,23 +49,14 @@ namespace StudReg.Controllers
             }
             return NotFound(result.Message);
         }
-        [HttpPost]
+        [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestModel model)
         {
-            var response = await _userService.LoginAsync(model);
+            var response =  _userService.LoginAsync(model);
             if (response.Status)
             {
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.NameIdentifier,response.Data.Id.ToString()),
-                    new Claim(ClaimTypes.Email,response.Data.Email)
-
-                };
-                var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                var principal = new ClaimsPrincipal(identity);
-                var properties = new AuthenticationProperties();
-                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, properties);
-                return Ok();
+                return Ok(JwtTokenGenerator.GenerateJwtToken(response.Data.Id, response.Data.Email, response.Data.Roles));
+               
             }
             return BadRequest();
             

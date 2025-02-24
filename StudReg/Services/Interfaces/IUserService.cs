@@ -6,7 +6,7 @@ namespace StudReg.Services.Interfaces
     {
         Task<BaseResponse<UserDto>> CreateAsync(CreateUserRequestModel model);
         Task<BaseResponse<UserDto>> GetAsync(Guid id);
-        Task<BaseResponse<UserDto>> LoginAsync(LoginRequestModel model);
+        BaseResponse<UserDto> LoginAsync(LoginRequestModel model);
         Task<BaseResponse<ICollection<UserDto>>> GetAllAsync();
 
     }
