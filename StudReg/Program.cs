@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
+using AspNetCoreRateLimit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,7 +60,7 @@ builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-
+builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IGuardianService, GuardianService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
@@ -69,6 +70,24 @@ builder.Services.AddScoped<IGuardianService, GuardianService>();
 builder.Services.AddScoped<HttpContextAccessor>();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+builder.Services.Configure<IpRateLimitOptions>(options =>
+{
+    options.GeneralRules = new List<RateLimitRule>
+    {
+        new RateLimitRule
+        {
+            Endpoint = "*",
+            Period = "1000s",
+            Limit = 5 ,// Allow 5 requests per 10 seconds
+
+        }
+    };
+});
+builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+builder.Services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
+builder.Services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+builder.Services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
 
 // builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(config =>
 // {
@@ -105,7 +124,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-// app.UseMiddleware<ApiKeyMiddleware>();
+app.UseMiddleware<ThrottlingMiddleware>();
+
+// app.UseMiddleware<RateLimitingMiddleware>();
+// app.UseIpRateLimiting();
+
 app.UseAuthentication();
 
 app.UseAuthorization();
