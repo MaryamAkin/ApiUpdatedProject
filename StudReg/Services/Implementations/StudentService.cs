@@ -93,9 +93,9 @@ namespace StudReg.Services.Implementations
             };
         }
 
-        public async Task<BaseResponse<ICollection<StudentDto>>> GetAllAsync()
+        public async Task<BaseResponse<PaginationResult<StudentDto>>> GetAllAsync(PageRequest pageRequest)
         {
-            var students = await _studentRepository.GetAllAsync();
+            var students = await _studentRepository.GetAllAsync(pageRequest);
             //var listOfStudent = students.Select(a => new StudentDto
             //{
             //    Id = a.Id,
@@ -106,12 +106,28 @@ namespace StudReg.Services.Implementations
             //    FullName = "",
             //    GuardianPhoneNumber = "",
             //});
-            var listOfStudent = students.Select(a => a.Adapt<StudentDto>());
-            return new BaseResponse<ICollection<StudentDto>>
+            var result = new PaginationResult<StudentDto>
+            {
+                Items = students.Items.Select( a => new StudentDto
+                {
+                    Id = a.Id,
+                    Email = a.Email,
+                    AdmissionNumber =a.AdmissionNumber,
+                    Class = a.Class,
+                    DateCreated = a.DateCreated,
+                    FullName = "",
+                    GuardianPhoneNumber = "",
+                }),
+                PageSize = students.PageSize,
+                HasNextPage = students.HasNextPage,
+                HasPreviousPage = students.HasPreviousPage
+
+            };
+            return new BaseResponse<PaginationResult<StudentDto>>
             {
                 Message = "students retrieved",
                 Status = true,
-                Data = listOfStudent.ToList()
+                Data = result
             };
         }
 

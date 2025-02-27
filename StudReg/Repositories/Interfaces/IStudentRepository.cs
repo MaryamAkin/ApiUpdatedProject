@@ -9,6 +9,6 @@ namespace StudReg.Repositories.Interfaces
         Task<Student?> GetAsync(Expression<Func<Student, bool>> exp);
         Task<ICollection<Student>> GetSelectedAsync(List<Guid> ids);
         Task<ICollection<Student>> GetSelectedAsync(Expression<Func<Student, bool>> exp);
-        Task<ICollection<Student>> GetAllAsync();
+        Task<PaginationResult<Student>> GetAllAsync(PageRequest pageRequest);
     }
 }

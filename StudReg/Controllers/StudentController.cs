@@ -26,9 +26,9 @@ namespace StudReg.Controllers
             return BadRequest(result.Message);
         }
         [HttpGet]
-        public async Task<IActionResult> GetStudents()
+        public async Task<IActionResult> GetStudents([FromQuery] PageRequest pageRequest)
         {
-            var result = await _studentService.GetAllAsync();
+            var result = await _studentService.GetAllAsync(pageRequest);
             return Ok(result);
         }
         [HttpGet("id")]

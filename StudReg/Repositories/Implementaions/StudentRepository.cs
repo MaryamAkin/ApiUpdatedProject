@@ -13,12 +13,24 @@ namespace StudReg.Repositories.Implementaions
             _context = context;
         }
 
-        public async Task<ICollection<Student>> GetAllAsync()
+        public async Task<PaginationResult<Student>> GetAllAsync(PageRequest pageRequest)
         {
-            return await _context.Set<Student>()
-                .Include(a => a.Guardian)
-                .Include(a => a.Profile)
-                .ToListAsync();
+            var query = _context.Set<Student>().AsQueryable();
+            var totalRecords = query.Count();
+            var totalPages = totalRecords/pageRequest.PageSize;
+            var items = query.Skip((pageRequest.CurrentPage - 1) * pageRequest.PageSize).Take(pageRequest.PageSize).ToList();
+
+            return new PaginationResult<Student>
+            {
+                Items = items,
+                PageSize = pageRequest.PageSize,
+                TotalPages = totalPages,
+                TotalItems = totalRecords,
+                CurrentPage = pageRequest.CurrentPage,
+                HasNextPage = totalPages - pageRequest.CurrentPage > 0 ? true : false,
+                HasPreviousPage = pageRequest.CurrentPage - 1 > 0? true : false
+            };
+
         }
 
         public async Task<Student?> GetAsync(Guid id)

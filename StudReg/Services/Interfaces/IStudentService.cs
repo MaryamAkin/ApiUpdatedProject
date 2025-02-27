@@ -6,6 +6,6 @@ namespace StudReg.Services.Interfaces
     {
         Task<BaseResponse<StudentDto>> CreateAsync(CreateStudentRequestModel model);
         Task<BaseResponse<StudentDto>> GetAsync(Guid id);
-        Task<BaseResponse<ICollection<StudentDto>>> GetAllAsync();
+        Task<BaseResponse<PaginationResult<StudentDto>>> GetAllAsync(PageRequest pageRequest);
     }
 }

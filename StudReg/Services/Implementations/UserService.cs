@@ -1,4 +1,5 @@
-﻿using StudReg.Domain;
+﻿using Microsoft.Extensions.Caching.Memory;
+using StudReg.Domain;
 using StudReg.Dtos;
 using StudReg.Repositories.Interfaces;
 using StudReg.Services.Interfaces;
@@ -8,10 +9,11 @@ namespace StudReg.Services.Implementations
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
-
-        public UserService(IUserRepository userRepository)
+        private readonly IMemoryCache _memoryCache;
+        public UserService(IUserRepository userRepository, IMemoryCache memoryCache)
         {
             _userRepository = userRepository;
+            _memoryCache = memoryCache;
         }
 
         public async Task<BaseResponse<UserDto>> CreateAsync(CreateUserRequestModel model)
@@ -47,8 +49,26 @@ namespace StudReg.Services.Implementations
         }
         public async Task<BaseResponse<ICollection<UserDto>>> GetAllAsync()
         {
-            var users = await _userRepository.GetAllAsync();
-            var listOfUser = users.Select(a => new UserDto
+            if(_memoryCache.TryGetValue("Users", out ICollection<User> users ))
+            {
+                var listOfUser = users.Select(a => new UserDto
+                {
+                    Id = a.Id,
+                    Email = a.Email,
+                    DateCreated = a.DateCreated,
+                });
+                return new BaseResponse<ICollection<UserDto>>
+                {
+                    Message = "users retrieved",
+                    Status = true,
+                    Data = listOfUser.ToList()
+                };
+            }
+
+
+            users = await _userRepository.GetAllAsync();
+            _memoryCache.Set("Users", users);
+             var listOfUserInfo = users.Select(a => new UserDto
             {
                 Id = a.Id,
                 Email = a.Email,
@@ -58,8 +78,9 @@ namespace StudReg.Services.Implementations
             {
                 Message = "users retrieved",
                 Status = true,
-                Data = listOfUser.ToList()
+                Data = listOfUserInfo.ToList()
             };
+           
         }
 
         public async Task<BaseResponse<UserDto>> GetAsync(Guid id)
